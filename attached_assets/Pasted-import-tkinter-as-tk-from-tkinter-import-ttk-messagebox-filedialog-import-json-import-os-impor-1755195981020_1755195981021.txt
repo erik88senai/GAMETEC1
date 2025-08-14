@@ -1,0 +1,238 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
+import json
+import os
+import pandas as pd
+import webbrowser
+
+ARQUIVO_DADOS = "game_tec_data.json"
+
+# CRITÉRIOS PADRÃO
+CRITERIOS = {
+    "Frequência escolar acima de 80%": 100,
+    "Pontualidade": 50,
+    "Participação em atividades extras": 70,
+    "Cumprimento de tarefas escolares": 60,
+    "Participação em ações": 80,
+    "Trancamento de matrícula": -100,
+    "Competições culturais/esportivas": "variável",
+    "Realização de diagnóstica SAEP": 100,
+    "Nota média ou acima no SAEP": 100,
+    "Frequência abaixo de 75%": -70,
+    "Receber advertências": -50,
+    "Emprego na indústria": 100,
+    "Locação de livros": 70,
+    "Ações do Psicossocial": 70,
+    "Curso no Senai Play": 50
+}
+
+# MODALIDADES
+MODALIDADES = ["Aprendizagem", "Técnico", "Técnico NEM"]
+
+# ----- FUNÇÕES DE BANCO DE DADOS -----
+def carregar_dados():
+    if os.path.exists(ARQUIVO_DADOS):
+        try:
+            with open(ARQUIVO_DADOS, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return {mod: {} for mod in MODALIDADES}
+    return {mod: {} for mod in MODALIDADES}
+
+def salvar_dados():
+    with open(ARQUIVO_DADOS, "w") as f:
+        json.dump(dados, f, indent=4)
+
+# ----- FUNÇÕES PRINCIPAIS -----
+def cadastrar_aluno(modalidade, nome):
+    nome = nome.strip()
+    if not nome:
+        messagebox.showwarning("Aviso", "Digite um nome.")
+        return
+    if nome in dados[modalidade]:
+        messagebox.showinfo("Info", f"{nome} já está cadastrado.")
+    else:
+        dados[modalidade][nome] = 0
+        salvar_dados()
+        atualizar_ranking(modalidade)
+        messagebox.showinfo("Sucesso", f"Aluno {nome} cadastrado!")
+
+def cadastrar_em_massa(modalidade):
+    arquivo = filedialog.askopenfilename(filetypes=[("Planilhas", "*.csv;*.xlsx")])
+    if not arquivo:
+        return
+    try:
+        if arquivo.endswith(".csv"):
+            df = pd.read_csv(arquivo)
+        else:
+            df = pd.read_excel(arquivo)
+        for nome in df.iloc[:,0].dropna():
+            nome = str(nome).strip()
+            if nome and nome not in dados[modalidade]:
+                dados[modalidade][nome] = 0
+        salvar_dados()
+        atualizar_ranking(modalidade)
+        messagebox.showinfo("Sucesso", "Cadastro em massa concluído!")
+    except Exception as e:
+        messagebox.showerror("Erro", f"Falha ao importar: {e}")
+
+def adicionar_pontos(modalidade, aluno, criterios):
+    if not aluno or aluno not in dados[modalidade]:
+        messagebox.showwarning("Aviso", "Selecione um aluno válido.")
+        return
+    total_pontos = 0
+    for crit in criterios:
+        pontos = CRITERIOS[crit]
+        if pontos == "variável":
+            valor = simple_input(f"Digite pontos para '{crit}':")
+            if valor is None:
+                continue
+            try:
+                pontos = int(valor)
+            except:
+                messagebox.showerror("Erro", "Valor inválido.")
+                return
+        total_pontos += pontos
+    dados[modalidade][aluno] += total_pontos
+    salvar_dados()
+    atualizar_ranking(modalidade)
+    messagebox.showinfo("Sucesso", f"{total_pontos} pontos adicionados para {aluno}!")
+
+def excluir_aluno(modalidade, aluno):
+    if aluno in dados[modalidade]:
+        del dados[modalidade][aluno]
+        salvar_dados()
+        atualizar_ranking(modalidade)
+        messagebox.showinfo("Sucesso", f"Aluno {aluno} removido.")
+    else:
+        messagebox.showwarning("Aviso", "Aluno não encontrado.")
+
+def atualizar_ranking(modalidade):
+    lista = listas_ranking[modalidade]
+    lista.delete(*lista.get_children())
+    ranking = sorted(dados[modalidade].items(), key=lambda x: x[1], reverse=True)
+    for pos, (nome, pontos) in enumerate(ranking, start=1):
+        lista.insert("", "end", values=(pos, nome, pontos))
+
+def atualizar_ranking_geral():
+    lista = listas_ranking["Geral"]
+    lista.delete(*lista.get_children())
+    total_geral = {}
+    for mod in MODALIDADES:
+        for aluno, pontos in dados[mod].items():
+            total_geral[aluno] = total_geral.get(aluno, 0) + pontos
+    ranking = sorted(total_geral.items(), key=lambda x: x[1], reverse=True)
+    for pos, (nome, pontos) in enumerate(ranking, start=1):
+        lista.insert("", "end", values=(pos, nome, pontos))
+
+def abrir_ranking_completo(modalidade):
+    top = tk.Toplevel(root)
+    top.title(f"Ranking Completo - {modalidade}")
+    tree = ttk.Treeview(top, columns=("Posição", "Aluno", "Pontos"), show="headings")
+    for col in ("Posição", "Aluno", "Pontos"):
+        tree.heading(col, text=col)
+        tree.column(col, anchor="center")
+    tree.pack(fill="both", expand=True)
+    ranking = sorted(dados[modalidade].items(), key=lambda x: x[1], reverse=True)
+    for pos, (nome, pontos) in enumerate(ranking, start=1):
+        tree.insert("", "end", values=(pos, nome, pontos))
+
+def exportar_html(modalidade):
+    ranking = sorted(dados[modalidade].items(), key=lambda x: x[1], reverse=True)
+    html = "<h1>Ranking - {}</h1><table border=1><tr><th>Posição</th><th>Aluno</th><th>Pontos</th></tr>".format(modalidade)
+    for pos, (nome, pontos) in enumerate(ranking, start=1):
+        html += f"<tr><td>{pos}</td><td>{nome}</td><td>{pontos}</td></tr>"
+    html += "</table>"
+    arquivo = f"ranking_{modalidade}.html"
+    with open(arquivo, "w", encoding="utf-8") as f:
+        f.write(html)
+    webbrowser.open(f"file://{os.path.abspath(arquivo)}")
+
+# Input simples
+def simple_input(mensagem):
+    top = tk.Toplevel(root)
+    top.title("Entrada de dados")
+    tk.Label(top, text=mensagem).pack(pady=5)
+    entrada = tk.Entry(top)
+    entrada.pack(pady=5)
+    valor = {"res": None}
+    def confirmar():
+        valor["res"] = entrada.get()
+        top.destroy()
+    tk.Button(top, text="OK", command=confirmar).pack(pady=5)
+    top.wait_window()
+    return valor["res"]
+
+# ----- INTERFACE -----
+dados = carregar_dados()
+listas_ranking = {}
+
+root = tk.Tk()
+root.title("🎮 GAME TEC EDITION 🎮")
+root.geometry("900x600")
+root.configure(bg="#222")
+
+# Estilo
+style = ttk.Style()
+style.configure("Treeview.Heading", font=("Arial", 11, "bold"))
+style.configure("Treeview", font=("Arial", 10))
+
+# Cabeçalho
+tk.Label(root, text="🎮 GAME TEC EDITION 🎮", font=("Arial", 20, "bold"), bg="#222", fg="#fff").pack(pady=5)
+tk.Label(root, text="Transforme seus estudos em aventura!", font=("Arial", 14), bg="#222", fg="#f39c12").pack()
+
+# Notebook de abas
+notebook = ttk.Notebook(root)
+notebook.pack(fill="both", expand=True, pady=10)
+
+def criar_aba(modalidade):
+    frame = tk.Frame(notebook, bg="#2c3e50")
+    notebook.add(frame, text=modalidade)
+    # Cadastro
+    tk.Label(frame, text="Nome:", bg="#2c3e50", fg="white").grid(row=0, column=0, padx=5, pady=5)
+    nome_entry = tk.Entry(frame)
+    nome_entry.grid(row=0, column=1, padx=5, pady=5)
+    tk.Button(frame, text="Cadastrar", bg="#27ae60", fg="white",
+              command=lambda: [cadastrar_aluno(modalidade, nome_entry.get()), nome_entry.delete(0, tk.END)]).grid(row=0, column=2, padx=5, pady=5)
+    tk.Button(frame, text="Importar Planilha", bg="#2980b9", fg="white",
+              command=lambda: cadastrar_em_massa(modalidade)).grid(row=0, column=3, padx=5, pady=5)
+    # Critérios
+    criterios_listbox = tk.Listbox(frame, selectmode="multiple", height=6)
+    for c in CRITERIOS.keys():
+        criterios_listbox.insert(tk.END, c)
+    criterios_listbox.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+    aluno_combo = ttk.Combobox(frame, values=list(dados[modalidade].keys()))
+    aluno_combo.grid(row=1, column=2, padx=5, pady=5)
+    tk.Button(frame, text="Adicionar Pontos", bg="#8e44ad", fg="white",
+              command=lambda: adicionar_pontos(modalidade, aluno_combo.get(), [criterios_listbox.get(i) for i in criterios_listbox.curselection()])).grid(row=1, column=3, padx=5, pady=5)
+    tk.Button(frame, text="Excluir Aluno", bg="#c0392b", fg="white",
+              command=lambda: excluir_aluno(modalidade, aluno_combo.get())).grid(row=2, column=3, padx=5, pady=5)
+    # Ranking
+    tree = ttk.Treeview(frame, columns=("Posição", "Aluno", "Pontos"), show="headings")
+    for col in ("Posição", "Aluno", "Pontos"):
+        tree.heading(col, text=col)
+        tree.column(col, anchor="center")
+    tree.grid(row=3, column=0, columnspan=4, sticky="nsew")
+    listas_ranking[modalidade] = tree
+    tk.Button(frame, text="Ver Ranking Completo", command=lambda: abrir_ranking_completo(modalidade)).grid(row=4, column=0, pady=5)
+    tk.Button(frame, text="Exportar HTML", command=lambda: exportar_html(modalidade)).grid(row=4, column=1, pady=5)
+    frame.grid_rowconfigure(3, weight=1)
+    frame.grid_columnconfigure(1, weight=1)
+    atualizar_ranking(modalidade)
+
+for mod in MODALIDADES:
+    criar_aba(mod)
+
+# Aba Geral
+frame_geral = tk.Frame(notebook, bg="#2c3e50")
+notebook.add(frame_geral, text="Ranking Geral")
+tree_geral = ttk.Treeview(frame_geral, columns=("Posição", "Aluno", "Pontos"), show="headings")
+for col in ("Posição", "Aluno", "Pontos"):
+    tree_geral.heading(col, text=col)
+    tree_geral.column(col, anchor="center")
+tree_geral.pack(fill="both", expand=True, pady=10)
+listas_ranking["Geral"] = tree_geral
+tk.Button(frame_geral, text="Atualizar", command=atualizar_ranking_geral).pack(pady=5)
+tk.Button(frame_geral, text="Exportar HTML", command=lambda: exportar_html("Geral")).pack(pady=5)
+
+root.mainloop()
