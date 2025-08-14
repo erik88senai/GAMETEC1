@@ -1,40 +1,163 @@
-// Game Tec Edition JavaScript
+// Game Tec Edition Modern JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    // Add glow effect to important elements
-    addGlowEffects();
+    // Initialize modern features
+    initializeModernFeatures();
     
-    // Initialize form validations
+    // Initialize tooltips
+    initializeTooltips();
+    
+    // Add modern visual effects
+    addModernEffects();
+    
+    // Initialize form validations with modern styling
     initializeFormValidation();
+    
+    // Add particle background
+    createParticleBackground();
+    
+    // Initialize smooth animations
+    initializeAnimations();
     
     // Auto-refresh rankings every 30 seconds
     setInterval(function() {
-        // Only refresh if user is not actively filling forms
         if (!document.activeElement || document.activeElement.tagName !== 'INPUT') {
             refreshAllRankings();
         }
     }, 30000);
+    
+    // Performance optimization
+    optimizePerformance();
 });
 
-// Add glow effects to gaming elements
-function addGlowEffects() {
-    const title = document.querySelector('.display-4');
-    if (title) {
-        title.classList.add('glow');
+function initializeModernFeatures() {
+    // Add modern classes to elements
+    document.querySelectorAll('.card').forEach((card, index) => {
+        card.classList.add('fade-in-scale');
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Add hover effects to interactive elements
+    document.querySelectorAll('.btn, .nav-link, .form-control').forEach(element => {
+        element.classList.add('hover-lift');
+    });
+}
+
+function initializeTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            boundary: 'viewport',
+            customClass: 'modern-tooltip'
+        });
+    });
+}
+
+function createParticleBackground() {
+    const particleContainer = document.createElement('div');
+    particleContainer.className = 'particle-bg';
+    document.body.appendChild(particleContainer);
+    
+    // Create floating particles
+    for (let i = 0; i < 15; i++) {
+        setTimeout(() => {
+            createParticle(particleContainer);
+        }, Math.random() * 5000);
     }
     
-    // Add glow to top 3 ranking positions
+    // Continuously create new particles
+    setInterval(() => {
+        if (particleContainer.children.length < 20) {
+            createParticle(particleContainer);
+        }
+    }, 2000);
+}
+
+function createParticle(container) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    
+    const size = Math.random() * 4 + 2;
+    const left = Math.random() * 100;
+    const animationDuration = Math.random() * 10 + 15;
+    
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.left = `${left}%`;
+    particle.style.animationDuration = `${animationDuration}s`;
+    particle.style.animationDelay = `${Math.random() * 5}s`;
+    
+    container.appendChild(particle);
+    
+    // Remove particle after animation
+    setTimeout(() => {
+        if (particle.parentNode) {
+            particle.remove();
+        }
+    }, animationDuration * 1000);
+}
+
+function initializeAnimations() {
+    // Intersection Observer for scroll animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('slide-in-up');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    // Observe elements for animation
+    document.querySelectorAll('.card, .table-responsive').forEach(el => {
+        observer.observe(el);
+    });
+}
+
+// Add modern visual effects to gaming elements
+function addModernEffects() {
+    const title = document.querySelector('.display-4');
+    if (title) {
+        title.classList.add('glow', 'gradient-text');
+    }
+    
+    // Add enhanced effects to top 3 ranking positions
     document.querySelectorAll('.badge.bg-warning, .badge.bg-secondary, .badge.bg-info').forEach(badge => {
-        if (badge.textContent.includes('🥇') || badge.textContent.includes('🥈') || badge.textContent.includes('🥉')) {
-            badge.style.animation = 'glow 2s ease-in-out infinite alternate';
+        if (badge.textContent.includes('🥇')) {
+            badge.classList.add('trophy-gold');
+        } else if (badge.textContent.includes('🥈')) {
+            badge.classList.add('trophy-silver');
+        } else if (badge.textContent.includes('🥉')) {
+            badge.classList.add('trophy-bronze');
         }
     });
+    
+    // Add modern glow to navigation
+    const navbar = document.querySelector('.navbar-brand');
+    if (navbar) {
+        navbar.classList.add('float');
+    }
+    
+    // Add glass effect to cards
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.add('glass-effect');
+    });
+}
+
+function optimizePerformance() {
+    // Preload critical resources
+    const criticalImages = document.querySelectorAll('img[data-src]');
+    criticalImages.forEach(img => {
+        img.src = img.dataset.src;
+    });
+    
+    // Optimize animations for performance
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (prefersReducedMotion.matches) {
+        document.body.classList.add('reduced-motion');
+    }
 }
 
 // Form validation
