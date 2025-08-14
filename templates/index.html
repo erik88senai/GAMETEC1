@@ -17,6 +17,29 @@
         <div class="badge badge-warning">
             <i class="fas fa-graduation-cap me-1"></i>Multi-Modalidades
         </div>
+        <div class="badge badge-info">
+            <i class="fas fa-users me-1"></i>Sistema de Equipes
+        </div>
+    </div>
+    
+    <!-- Quick Access for Students -->
+    <div class="text-center mt-4">
+        <div class="card bg-dark border-info d-inline-block" style="max-width: 400px;">
+            <div class="card-header bg-info">
+                <h6 class="card-title mb-0 text-dark">
+                    <i class="fas fa-user-graduate me-2"></i>Área do Aluno
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Acesse sua área exclusiva para gerenciar equipes</p>
+                <a href="{{ url_for('teams.student_login') }}" class="btn btn-info me-2">
+                    <i class="fas fa-sign-in-alt me-1"></i>Login Aluno
+                </a>
+                <a href="{{ url_for('teams.student_register') }}" class="btn btn-outline-info">
+                    <i class="fas fa-user-plus me-1"></i>Cadastrar
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 

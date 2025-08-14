@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Equipe - {{ team.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-5 fw-bold mb-2">
+            <i class="fas fa-cog me-3"></i>Gerenciar Equipe
+        </h1>
+        <p class="lead">{{ team.name }} - {{ team.modalidade }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('teams.student_dashboard') }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="{{ url_for('teams.student_logout') }}" class="btn btn-outline-danger">
+            <i class="fas fa-sign-out-alt me-2"></i>Sair
+        </a>
+    </div>
+</div>
+
+<!-- Team Information -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card bg-dark border-warning">
+            <div class="card-header bg-warning d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 text-dark">
+                    <i class="fas fa-info-circle me-2"></i>Informações da Equipe
+                </h5>
+                <span class="badge bg-dark">
+                    <i class="fas fa-crown me-1"></i>Capitão
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nome:</strong> {{ team.name }}</p>
+                        <p><strong>Modalidade:</strong> {{ team.modalidade }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Código de Acesso:</strong> 
+                            <code class="bg-secondary px-2 py-1 rounded">{{ team.access_code }}</code>
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="copyAccessCode()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </p>
+                        <p><strong>Total de Membros:</strong> {{ members|length }}</p>
+                    </div>
+                </div>
+                {% if team.description %}
+                <div class="mt-3">
+                    <p><strong>Descrição:</strong></p>
+                    <p class="text-muted">{{ team.description }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Dica:</strong> Compartilhe o código de acesso <code>{{ team.access_code }}</code> 
+                    com outros alunos para que eles possam entrar na sua equipe.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-dark border-success">
+            <div class="card-header bg-success">
+                <h6 class="card-title mb-0 text-dark">
+                    <i class="fas fa-chart-bar me-2"></i>Estatísticas
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                {% set total_points = members|sum(attribute='total_points', default=0) %}
+                <h3 class="text-success">{{ members|length }}</h3>
+                <p class="text-muted mb-2">Membros Ativos</p>
+                <hr>
+                <h4 class="text-warning">{{ total_points }}</h4>
+                <p class="text-muted mb-0">Pontos da Equipe</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Members -->
+<div class="card bg-dark border-primary">
+    <div class="card-header bg-primary d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-users me-2"></i>Membros da Equipe
+        </h5>
+        <button class="btn btn-light btn-sm" onclick="refreshMembers()">
+            <i class="fas fa-refresh me-1"></i>Atualizar
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th class="text-center">Pontos Totais</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Papel</th>
+                        <th class="text-center">Entrada</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr {% if member.id == student.id %}class="table-warning"{% endif %}>
+                        <td>
+                            <i class="fas fa-user me-2"></i>{{ member.name }}
+                            {% if member.id == student.id %}
+                                <span class="badge bg-success ms-2">Você</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ member.email }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-success">{{ member.total_points }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if member.active %}
+                                <span class="badge bg-success">Ativo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if member.id == team.captain_id %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-crown me-1"></i>Capitão
+                                </span>
+                            {% else %}
+                                <span class="badge bg-primary">Membro</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <small class="text-muted">{{ member.created_at[:10] if member.created_at else 'N/A' }}</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if members|length == 0 %}
+        <div class="text-center py-4">
+            <i class="fas fa-users-slash display-4 text-muted mb-3"></i>
+            <p class="text-muted">Nenhum membro encontrado</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Team Actions -->
+<div class="card bg-dark border-info mt-4">
+    <div class="card-header bg-info">
+        <h5 class="card-title mb-0 text-dark">
+            <i class="fas fa-tools me-2"></i>Ações da Equipe
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card border-success h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-share-alt display-4 text-success mb-3"></i>
+                        <h6>Convidar Membros</h6>
+                        <p class="text-muted small">Compartilhe o código de acesso</p>
+                        <button class="btn btn-success btn-sm" onclick="shareTeamCode()">
+                            <i class="fas fa-share me-1"></i>Compartilhar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card border-warning h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line display-4 text-warning mb-3"></i>
+                        <h6>Relatório de Progresso</h6>
+                        <p class="text-muted small">Veja o desempenho da equipe</p>
+                        <button class="btn btn-warning btn-sm" onclick="generateReport()">
+                            <i class="fas fa-file-alt me-1"></i>Gerar Relatório
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card border-info h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-trophy display-4 text-info mb-3"></i>
+                        <h6>Ranking da Equipe</h6>
+                        <p class="text-muted small">Compare com outras equipes</p>
+                        <a href="{{ url_for('teams.student_dashboard') }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-list-ol me-1"></i>Ver Ranking
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyAccessCode() {
+    const code = '{{ team.access_code }}';
+    navigator.clipboard.writeText(code).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+        }, 2000);
+        
+        // Show toast notification
+        showToast('Código copiado!', 'success');
+    }).catch(function(err) {
+        console.error('Erro ao copiar código: ', err);
+        showToast('Erro ao copiar código', 'error');
+    });
+}
+
+function shareTeamCode() {
+    const teamName = '{{ team.name }}';
+    const accessCode = '{{ team.access_code }}';
+    const modalidade = '{{ team.modalidade }}';
+    
+    const message = `🎮 Convite para equipe Game Tec Edition!\n\n` +
+                   `Equipe: ${teamName}\n` +
+                   `Modalidade: ${modalidade}\n` +
+                   `Código de Acesso: ${accessCode}\n\n` +
+                   `Entre em: ${window.location.origin}/teams/student/register\n` +
+                   `E use o código para se juntar à nossa equipe!`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: `Convite - ${teamName}`,
+            text: message
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(message).then(function() {
+            showToast('Convite copiado! Cole e compartilhe com outros alunos.', 'success');
+        });
+    }
+}
+
+function generateReport() {
+    // Future implementation
+    showToast('Funcionalidade em desenvolvimento!', 'info');
+}
+
+function refreshMembers() {
+    // Simple page refresh for now
+    location.reload();
+}
+
+function showToast(message, type) {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

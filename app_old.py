@@ -21,10 +21,6 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Import routes after app creation
 from routes import *
-from team_system import teams
-
-# Register team system blueprint
-app.register_blueprint(teams)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

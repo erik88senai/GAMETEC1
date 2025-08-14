@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de Aluno - Game Tec Edition{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold mb-3">
+        <i class="fas fa-user-plus me-3"></i>Cadastro de Aluno
+    </h1>
+    <p class="lead">Crie sua conta e junte-se a uma equipe!</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card bg-dark border-primary">
+            <div class="card-header bg-primary">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>Informações do Aluno
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="registerForm">
+                    <!-- Personal Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome Completo *</label>
+                            <input type="text" class="form-control" name="name" required maxlength="100">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" name="email" required maxlength="120">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Senha *</label>
+                            <input type="password" class="form-control" name="password" required minlength="6">
+                        </div>
+                    </div>
+                    
+                    <!-- Team Options -->
+                    <div class="mb-4">
+                        <label class="form-label">Opção de Equipe *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="team_action" value="create" id="createTeam" onchange="toggleTeamOptions()">
+                                    <label class="form-check-label" for="createTeam">
+                                        <i class="fas fa-plus-circle me-2"></i>Criar Nova Equipe
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="team_action" value="join" id="joinTeam" onchange="toggleTeamOptions()">
+                                    <label class="form-check-label" for="joinTeam">
+                                        <i class="fas fa-user-friends me-2"></i>Entrar em Equipe Existente
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Create Team Section -->
+                    <div id="createTeamSection" style="display: none;">
+                        <div class="card border-success mb-3">
+                            <div class="card-header bg-success text-dark">
+                                <i class="fas fa-users me-2"></i>Informações da Nova Equipe
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Nome da Equipe *</label>
+                                        <input type="text" class="form-control" name="team_name" maxlength="100">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Modalidade *</label>
+                                        <select class="form-select" name="modalidade">
+                                            <option value="">Selecione...</option>
+                                            {% for modalidade in modalidades %}
+                                            <option value="{{ modalidade }}">{{ modalidade }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Descrição da Equipe</label>
+                                    <textarea class="form-control" name="description" rows="3" placeholder="Descreva o objetivo da equipe..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Join Team Section -->
+                    <div id="joinTeamSection" style="display: none;">
+                        <div class="card border-warning mb-3">
+                            <div class="card-header bg-warning text-dark">
+                                <i class="fas fa-key me-2"></i>Entrar em Equipe Existente
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Código de Acesso da Equipe *</label>
+                                    <input type="text" class="form-control" name="access_code" maxlength="20" 
+                                           placeholder="Ex: ABC12345" style="text-transform: uppercase;">
+                                    <div class="form-text">Peça o código para o capitão da equipe</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-user-check me-2"></i>Cadastrar
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p class="text-muted">
+                        Já tem conta? 
+                        <a href="{{ url_for('teams.student_login') }}" class="text-primary">Faça login aqui</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleTeamOptions() {
+    const createSection = document.getElementById('createTeamSection');
+    const joinSection = document.getElementById('joinTeamSection');
+    const createRadio = document.getElementById('createTeam');
+    const joinRadio = document.getElementById('joinTeam');
+    
+    if (createRadio.checked) {
+        createSection.style.display = 'block';
+        joinSection.style.display = 'none';
+        
+        // Make create team fields required
+        document.querySelector('input[name="team_name"]').required = true;
+        document.querySelector('select[name="modalidade"]').required = true;
+        document.querySelector('input[name="access_code"]').required = false;
+        
+    } else if (joinRadio.checked) {
+        createSection.style.display = 'none';
+        joinSection.style.display = 'block';
+        
+        // Make join team fields required
+        document.querySelector('input[name="access_code"]').required = true;
+        document.querySelector('input[name="team_name"]').required = false;
+        document.querySelector('select[name="modalidade"]').required = false;
+    }
+}
+
+// Format access code input
+document.querySelector('input[name="access_code"]').addEventListener('input', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+</script>
+{% endblock %}
