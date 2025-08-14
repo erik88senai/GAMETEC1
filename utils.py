@@ -199,3 +199,45 @@ def export_ranking_html(modalidade):
         f.write(html_content)
     
     return filepath
+
+def bulk_delete_func(modalidade, alunos_list):
+    """Delete multiple students from a modality"""
+    try:
+        data = load_data()
+        
+        if modalidade not in data:
+            return {'message': 'Modalidade inválida.', 'type': 'error'}
+        
+        deleted_count = 0
+        not_found = []
+        
+        for aluno in alunos_list:
+            if aluno in data[modalidade]:
+                del data[modalidade][aluno]
+                deleted_count += 1
+            else:
+                not_found.append(aluno)
+        
+        save_data(data)
+        
+        message_parts = []
+        if deleted_count > 0:
+            if deleted_count == 1:
+                message_parts.append(f'1 aluno foi excluído com sucesso')
+            else:
+                message_parts.append(f'{deleted_count} alunos foram excluídos com sucesso')
+        
+        if not_found:
+            if len(not_found) == 1:
+                message_parts.append(f'1 aluno não foi encontrado: {not_found[0]}')
+            else:
+                message_parts.append(f'{len(not_found)} alunos não foram encontrados')
+        
+        if deleted_count > 0:
+            message = '. '.join(message_parts) + '.'
+            return {'message': message, 'type': 'success'}
+        else:
+            return {'message': 'Nenhum aluno foi excluído.', 'type': 'warning'}
+            
+    except Exception as e:
+        return {'message': f'Erro ao excluir alunos: {str(e)}', 'type': 'error'}

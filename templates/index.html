@@ -149,6 +149,9 @@
                                     <button type="button" class="btn btn-danger btn-sm" onclick="deleteStudent('{{ modalidade }}')">
                                         <i class="fas fa-trash me-1"></i>Excluir Aluno
                                     </button>
+                                    <button type="button" class="btn btn-warning btn-sm" onclick="openBulkDeleteModal('{{ modalidade }}')">
+                                        <i class="fas fa-users-slash me-1"></i>Excluir Múltiplos
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -287,6 +290,58 @@
     </div>
 </div>
 
+<!-- Bulk Delete Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-warning">
+                <h5 class="modal-title">
+                    <i class="fas fa-users-slash me-2"></i>Excluir Múltiplos Alunos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Atenção: Esta ação irá excluir permanentemente os alunos selecionados.
+                </div>
+                
+                <form method="POST" action="{{ url_for('bulk_delete') }}" id="bulkDeleteForm">
+                    <input type="hidden" name="modalidade" id="bulkDeleteModalidade">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Selecione os alunos para excluir:</label>
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllStudents()">
+                                <i class="fas fa-check-double me-1"></i>Selecionar Todos
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllStudents()">
+                                <i class="fas fa-times me-1"></i>Desmarcar Todos
+                            </button>
+                        </div>
+                        
+                        <div class="border border-secondary rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                            <div id="studentsList">
+                                <!-- Students will be loaded here by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-muted small">
+                        <span id="selectedCount">0</span> aluno(s) selecionado(s)
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmBulkDelete()" id="bulkDeleteBtn" disabled>
+                    <i class="fas fa-trash me-1"></i>Excluir Selecionados
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -335,6 +390,105 @@ function confirmDelete() {
 function refreshRanking(modalidade) {
     // Simple page refresh for now - could be enhanced with AJAX
     location.reload();
+}
+
+// Bulk delete functions
+let currentModalidade = '';
+
+function openBulkDeleteModal(modalidade) {
+    currentModalidade = modalidade;
+    document.getElementById('bulkDeleteModalidade').value = modalidade;
+    
+    // Load students for this modality
+    loadStudentsForBulkDelete(modalidade);
+    
+    const modal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+    modal.show();
+}
+
+function loadStudentsForBulkDelete(modalidade) {
+    fetch(`/get_students/${modalidade}`)
+        .then(response => response.json())
+        .then(students => {
+            const studentsList = document.getElementById('studentsList');
+            studentsList.innerHTML = '';
+            
+            if (students.length === 0) {
+                studentsList.innerHTML = '<p class="text-muted">Nenhum aluno cadastrado nesta modalidade.</p>';
+                return;
+            }
+            
+            students.forEach((student, index) => {
+                const checkDiv = document.createElement('div');
+                checkDiv.className = 'form-check mb-2';
+                checkDiv.innerHTML = `
+                    <input class="form-check-input student-checkbox" type="checkbox" 
+                           name="alunos_selected" value="${student}" 
+                           id="student_${index}" onchange="updateSelectedCount()">
+                    <label class="form-check-label" for="student_${index}">
+                        <i class="fas fa-user me-1"></i>${student}
+                    </label>
+                `;
+                studentsList.appendChild(checkDiv);
+            });
+            
+            updateSelectedCount();
+        })
+        .catch(error => {
+            console.error('Error loading students:', error);
+            document.getElementById('studentsList').innerHTML = 
+                '<p class="text-danger">Erro ao carregar lista de alunos.</p>';
+        });
+}
+
+function selectAllStudents() {
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = true;
+    });
+    updateSelectedCount();
+}
+
+function deselectAllStudents() {
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('.student-checkbox:checked');
+    const count = selected.length;
+    
+    document.getElementById('selectedCount').textContent = count;
+    
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+    deleteBtn.disabled = count === 0;
+    
+    if (count > 0) {
+        deleteBtn.innerHTML = `<i class="fas fa-trash me-1"></i>Excluir ${count} Selecionado${count > 1 ? 's' : ''}`;
+    } else {
+        deleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Excluir Selecionados';
+    }
+}
+
+function confirmBulkDelete() {
+    const selected = document.querySelectorAll('.student-checkbox:checked');
+    
+    if (selected.length === 0) {
+        alert('Selecione pelo menos um aluno para excluir.');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 ? 
+        'Tem certeza que deseja excluir 1 aluno selecionado?' :
+        `Tem certeza que deseja excluir os ${count} alunos selecionados?`;
+    
+    if (confirm(message)) {
+        document.getElementById('bulkDeleteForm').submit();
+    }
 }
 
 function updateStudentSelect(selectElement, modalidade) {

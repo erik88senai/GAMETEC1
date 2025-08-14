@@ -43,7 +43,7 @@ def bulk_register():
         flash('Nenhum arquivo foi selecionado.', 'warning')
         return redirect(url_for('index'))
     
-    if file and allowed_file(file.filename):
+    if file and file.filename and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
@@ -91,6 +91,20 @@ def delete_student():
     aluno = request.form.get('aluno')
     
     result = delete_student_func(modalidade, aluno)
+    flash(result['message'], result['type'])
+    return redirect(url_for('index'))
+
+@app.route('/bulk_delete', methods=['POST'])
+def bulk_delete():
+    """Delete multiple students at once"""
+    modalidade = request.form.get('modalidade')
+    alunos_selected = request.form.getlist('alunos_selected')
+    
+    if not alunos_selected:
+        flash('Nenhum aluno foi selecionado para exclusão.', 'warning')
+        return redirect(url_for('index'))
+    
+    result = bulk_delete_func(modalidade, alunos_selected)
     flash(result['message'], result['type'])
     return redirect(url_for('index'))
 
