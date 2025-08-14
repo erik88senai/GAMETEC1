@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="text-center mb-4">
+    <h1 class="display-4 fw-bold text-primary mb-2">
+        <i class="fas fa-gamepad me-3"></i>GAME TEC EDITION
+    </h1>
+    <p class="lead text-warning">Transforme seus estudos em aventura!</p>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs mb-4" id="modalityTabs" role="tablist">
+    {% for modalidade in modalidades %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if loop.first %}active{% endif %}" 
+                id="{{ modalidade|replace(' ', '_') }}-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#{{ modalidade|replace(' ', '_') }}-pane" 
+                type="button" role="tab">
+            <i class="fas fa-graduation-cap me-2"></i>{{ modalidade }}
+        </button>
+    </li>
+    {% endfor %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="geral-tab" data-bs-toggle="tab" data-bs-target="#geral-pane" type="button" role="tab">
+            <i class="fas fa-trophy me-2"></i>Ranking Geral
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="modalityTabContent">
+    {% for modalidade in modalidades %}
+    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+         id="{{ modalidade|replace(' ', '_') }}-pane" 
+         role="tabpanel">
+        
+        <!-- Student Registration Section -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card bg-dark border-primary">
+                    <div class="card-header bg-primary">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-plus me-2"></i>Cadastro Individual
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('register_student') }}">
+                            <input type="hidden" name="modalidade" value="{{ modalidade }}">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="nome" placeholder="Nome do aluno" required>
+                                <button class="btn btn-success" type="submit">
+                                    <i class="fas fa-plus me-1"></i>Cadastrar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card bg-dark border-info">
+                    <div class="card-header bg-info">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-upload me-2"></i>Cadastro em Massa
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('bulk_register') }}" enctype="multipart/form-data">
+                            <input type="hidden" name="modalidade" value="{{ modalidade }}">
+                            <div class="input-group">
+                                <input type="file" class="form-control" name="file" accept=".csv,.xlsx,.xls" required>
+                                <button class="btn btn-info" type="submit">
+                                    <i class="fas fa-upload me-1"></i>Importar
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Formatos aceitos: CSV, Excel (.xlsx, .xls)</small>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Points Management Section -->
+        <div class="card bg-dark border-warning mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="card-title mb-0 text-dark">
+                    <i class="fas fa-star me-2"></i>Gerenciar Pontos
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_points') }}" id="pointsForm{{ loop.index }}">
+                    <input type="hidden" name="modalidade" value="{{ modalidade }}">
+                    
+                    <div class="row">
+                        <div class="col-lg-4 mb-3">
+                            <label class="form-label">Selecionar Aluno:</label>
+                            <select class="form-select" name="aluno" required onchange="updateStudentSelect(this, '{{ modalidade }}')">
+                                <option value="">Escolha um aluno...</option>
+                                {% for aluno, pontos in data[modalidade].items() %}
+                                    <option value="{{ aluno }}">{{ aluno }} ({{ pontos }} pts)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-3">
+                            <label class="form-label">Critérios:</label>
+                            <div class="criteria-scroll">
+                                {% for criterio, pontos in criterios.items() %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="criterios" value="{{ criterio }}" id="{{ modalidade }}_{{ loop.index0 }}_{{ loop.index }}">
+                                    <label class="form-check-label" for="{{ modalidade }}_{{ loop.index0 }}_{{ loop.index }}">
+                                        {{ criterio }} 
+                                        <span class="badge bg-secondary">
+                                            {% if pontos == "variável" %}
+                                                Variável
+                                            {% else %}
+                                                {{ pontos }} pts
+                                            {% endif %}
+                                        </span>
+                                    </label>
+                                    {% if pontos == "variável" %}
+                                    <input type="number" class="form-control form-control-sm mt-1" 
+                                           name="points_{{ criterio }}" placeholder="Pontos" style="display:none;">
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-3 d-flex align-items-end">
+                            <div class="w-100">
+                                <button type="submit" class="btn btn-warning w-100 mb-2">
+                                    <i class="fas fa-plus-circle me-1"></i>Adicionar Pontos
+                                </button>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteStudent('{{ modalidade }}')">
+                                        <i class="fas fa-trash me-1"></i>Excluir Aluno
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Ranking Section -->
+        <div class="card bg-dark border-success">
+            <div class="card-header bg-success d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-trophy me-2"></i>Ranking - {{ modalidade }}
+                </h5>
+                <div>
+                    <button class="btn btn-outline-light btn-sm me-2" onclick="refreshRanking('{{ modalidade }}')">
+                        <i class="fas fa-refresh me-1"></i>Atualizar
+                    </button>
+                    <a href="{{ url_for('export_html', modalidade=modalidade) }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-download me-1"></i>Exportar HTML
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped" id="ranking{{ modalidade|replace(' ', '_') }}">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Posição</th>
+                                <th>Aluno</th>
+                                <th class="text-center">Pontos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set ranking = data[modalidade].items()|sort(attribute=1, reverse=true) %}
+                            {% for aluno, pontos in ranking %}
+                            <tr>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ loop.index }}</span>
+                                </td>
+                                <td>{{ aluno }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">{{ pontos }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- General Ranking Tab -->
+    <div class="tab-pane fade" id="geral-pane" role="tabpanel">
+        <div class="card bg-dark border-warning">
+            <div class="card-header bg-warning d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 text-dark">
+                    <i class="fas fa-crown me-2"></i>Ranking Geral
+                </h5>
+                <div>
+                    <button class="btn btn-dark btn-sm me-2" onclick="refreshRanking('Geral')">
+                        <i class="fas fa-refresh me-1"></i>Atualizar
+                    </button>
+                    <a href="{{ url_for('export_html', modalidade='Geral') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-download me-1"></i>Exportar HTML
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped" id="rankingGeral">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Posição</th>
+                                <th>Aluno</th>
+                                <th class="text-center">Pontos Totais</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_geral = {} %}
+                            {% for mod in modalidades %}
+                                {% for aluno, pontos in data[mod].items() %}
+                                    {% if total_geral.update({aluno: total_geral.get(aluno, 0) + pontos}) %}{% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {% set ranking_geral = total_geral.items()|sort(attribute=1, reverse=true) %}
+                            {% for aluno, pontos in ranking_geral %}
+                            <tr>
+                                <td class="text-center">
+                                    {% if loop.index == 1 %}
+                                        <span class="badge bg-warning">🥇 {{ loop.index }}</span>
+                                    {% elif loop.index == 2 %}
+                                        <span class="badge bg-secondary">🥈 {{ loop.index }}</span>
+                                    {% elif loop.index == 3 %}
+                                        <span class="badge bg-info">🥉 {{ loop.index }}</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ aluno }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">{{ pontos }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Student Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este aluno?</p>
+                <form method="POST" action="{{ url_for('delete_student') }}" id="deleteForm">
+                    <input type="hidden" name="modalidade" id="deleteModalidade">
+                    <input type="hidden" name="aluno" id="deleteAluno">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Handle variable criteria points input
+document.addEventListener('change', function(e) {
+    if (e.target.type === 'checkbox' && e.target.name === 'criterios') {
+        const criterio = e.target.value;
+        const form = e.target.closest('form');
+        const pointsInput = form.querySelector(`input[name="points_${criterio}"]`);
+        
+        if (pointsInput) {
+            pointsInput.style.display = e.target.checked ? 'block' : 'none';
+            if (e.target.checked) {
+                pointsInput.required = true;
+                pointsInput.focus();
+            } else {
+                pointsInput.required = false;
+                pointsInput.value = '';
+            }
+        }
+    }
+});
+
+function deleteStudent(modalidade) {
+    const form = document.querySelector(`#${modalidade.replace(' ', '_')}-pane form[action*="add_points"]`);
+    const selectElement = form.querySelector('select[name="aluno"]');
+    const aluno = selectElement.value;
+    
+    if (!aluno) {
+        alert('Selecione um aluno para excluir.');
+        return;
+    }
+    
+    document.getElementById('deleteModalidade').value = modalidade;
+    document.getElementById('deleteAluno').value = aluno;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function confirmDelete() {
+    document.getElementById('deleteForm').submit();
+}
+
+function refreshRanking(modalidade) {
+    // Simple page refresh for now - could be enhanced with AJAX
+    location.reload();
+}
+
+function updateStudentSelect(selectElement, modalidade) {
+    // This function can be enhanced to provide real-time updates
+    // For now, it's just a placeholder for future enhancements
+}
+</script>
+{% endblock %}
