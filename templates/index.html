@@ -41,6 +41,28 @@
             </div>
         </div>
     </div>
+    
+    <!-- Admin Teams Management -->
+    <div class="text-center mt-3">
+        <div class="card bg-dark border-warning d-inline-block" style="max-width: 400px;">
+            <div class="card-header bg-warning">
+                <h6 class="card-title mb-0 text-dark">
+                    <i class="fas fa-users-cog me-2"></i>Gerenciamento Administrativo
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Visualize e gerencie as equipes criadas pelos alunos</p>
+                <a href="{{ url_for('teams_admin') }}" class="btn btn-warning">
+                    <i class="fas fa-users me-1"></i>Ver Equipes
+                </a>
+                {% if teams_data and teams_data.teams %}
+                <div class="mt-2">
+                    <small class="text-success">{{ teams_data.teams|length }} equipes ativas</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Tabs Navigation -->

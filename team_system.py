@@ -28,13 +28,40 @@ def load_teams_data():
         return {'teams': {}, 'students': {}, 'next_id': 1}
 
 def save_teams_data(data):
-    """Save teams data to JSON file"""
+    """Save teams data to JSON file and integrate with main system"""
     try:
         with open(TEAMS_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        
+        # Integrate teams with main system
+        integrate_teams_with_main_system(data)
         return True
     except:
         return False
+
+def integrate_teams_with_main_system(teams_data):
+    """Integrate team students with the main ranking system"""
+    main_data = load_data()
+    
+    # Add team students to the main ranking system
+    for team_id, team in teams_data['teams'].items():
+        modalidade = team['modalidade']
+        
+        # Ensure modalidade exists in main data
+        if modalidade not in main_data:
+            main_data[modalidade] = {}
+        
+        # Add each team member to the main system if not already there
+        for member_id in team['members']:
+            member = teams_data['students'].get(member_id)
+            if member:
+                student_name = member['name']
+                # Add student to main ranking system if not exists
+                if student_name not in main_data[modalidade]:
+                    main_data[modalidade][student_name] = 0
+    
+    # Save updated main data
+    save_data(main_data)
 
 def generate_access_code():
     """Generate a random 8-character access code"""
@@ -132,9 +159,9 @@ def student_register():
         student_data['team_id'] = team_id
         teams_data['students'][student_id] = student_data
         
-        # Save data
+        # Save data and integrate with main system
         if save_teams_data(teams_data):
-            flash('Cadastro realizado com sucesso!', 'success')
+            flash('Cadastro realizado com sucesso! Seu perfil foi automaticamente adicionado ao sistema de ranking.', 'success')
             # Store student session
             session['student_id'] = student_id
             session['is_student'] = True

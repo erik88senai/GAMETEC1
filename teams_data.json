@@ -1,0 +1,81 @@
+{
+  "teams": {
+    "1": {
+      "id": "1",
+      "name": "Os Neps",
+      "description": "Ganhar",
+      "modalidade": "Técnico",
+      "captain_id": "4",
+      "access_code": "8RJR6WYV",
+      "members": [
+        "4",
+        "5",
+        "6"
+      ],
+      "created_at": "{}"
+    }
+  },
+  "students": {
+    "1": {
+      "id": "1",
+      "name": "Wendell Farias",
+      "email": "wendel@sfiec.org.br",
+      "password_hash": "scrypt:32768:8:1$g5jJMa3JDLPrseY9$26f1cad122eab95b8e43490e80d280c0d5f2ac08cc98c8bec0cac90874a37e581af56a56e4e7dce0fff6a0ee2b21333a264e015ddee240c6429d995076358f5a",
+      "team_id": null,
+      "total_points": 0,
+      "is_active": true,
+      "created_at": "{}"
+    },
+    "2": {
+      "id": "2",
+      "name": "amaralice",
+      "email": "amaralice@sfiec.org.br",
+      "password_hash": "scrypt:32768:8:1$KF4A8d1TlbLYAFwh$4c53db3d5780e7a316b0023b8037259d3e4cbc92a6175b528eb6f1a8daf8d438fd2d6cb652feb3dae690d08983ca9680fbe4f8c63e6a8121bb62e3de347437de",
+      "team_id": null,
+      "total_points": 0,
+      "is_active": true,
+      "created_at": "{}"
+    },
+    "3": {
+      "id": "3",
+      "name": "leide",
+      "email": "leidei@sfiec.org.br",
+      "password_hash": "scrypt:32768:8:1$0yDrTnWPjCEl1Gb7$990ca87fd85bebfeb475a25f6dbdd71c9391dccdad4b3a35c4f03bc1cdeff7b138b4a7b21722bd2ff34bd40f2764efd0bc31031579bf9d766dcafa094eb1c286",
+      "team_id": null,
+      "total_points": 0,
+      "is_active": true,
+      "created_at": "{}"
+    },
+    "4": {
+      "id": "4",
+      "name": "Erik",
+      "email": "erik@gmail.com",
+      "password_hash": "scrypt:32768:8:1$8AuA4yvhjnYiXEw5$d283cb9128837168d15c2df639bc1568ae7fc386b147f55cd96c39806eeb85993d633f7874b3a13fec87a2064842a9a2da9ac2513c0075cb417a8d7969fa8fe6",
+      "team_id": "1",
+      "total_points": 0,
+      "is_active": true,
+      "created_at": "{}"
+    },
+    "5": {
+      "id": "5",
+      "name": "Sanderson",
+      "email": "sanderson@sfiec.org.br",
+      "password_hash": "scrypt:32768:8:1$yLaw9ueq1YPcfwba$031b54da4002f32f8e96cc1dac810edd2ff1771ada2383864691a0f833fe76fd066a568c1c540aef0974e4a3865841a2e2c0f0bdcb3e833c63392738e57a6562",
+      "team_id": "1",
+      "total_points": 0,
+      "is_active": true,
+      "created_at": "{}"
+    },
+    "6": {
+      "id": "6",
+      "name": "denispsicologo",
+      "email": "denis@sfiec.org.br",
+      "password_hash": "scrypt:32768:8:1$OqTnqt88iLKpw91J$fc93b35fd54c225ef4505164f8bfd5beb1ae3a2acdab1d2994a13326cce38085445127bd317d794ad52d59c4d70eec3b5a81a1c4843caf458376eaf68f721c15",
+      "team_id": "1",
+      "total_points": 0,
+      "is_active": true,
+      "created_at": "{}"
+    }
+  },
+  "next_id": 7
+}

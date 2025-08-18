@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, s
 from werkzeug.utils import secure_filename
 from app import app
 from utils import *
+from team_system import load_teams_data
 import os
 import tempfile
 
@@ -9,7 +10,8 @@ import tempfile
 def index():
     """Main dashboard page"""
     data = load_data()
-    return render_template('index.html', data=data, modalidades=MODALIDADES, criterios=CRITERIOS)
+    teams_data = load_teams_data()
+    return render_template('index.html', data=data, modalidades=MODALIDADES, criterios=CRITERIOS, teams_data=teams_data)
 
 @app.route('/register_student', methods=['POST'])
 def register_student():
@@ -147,3 +149,45 @@ def reset_data():
     except Exception as e:
         flash(f'Erro ao resetar dados: {str(e)}', 'error')
     return redirect(url_for('index'))
+
+@app.route('/teams_admin')
+def teams_admin():
+    """Admin view for managing teams"""
+    teams_data = load_teams_data()
+    main_data = load_data()
+    
+    # Create team summary with statistics
+    team_summary = []
+    for team_id, team in teams_data['teams'].items():
+        members = []
+        total_points = 0
+        
+        for member_id in team['members']:
+            member = teams_data['students'].get(member_id)
+            if member:
+                student_points = main_data.get(team['modalidade'], {}).get(member['name'], 0)
+                total_points += student_points
+                members.append({
+                    'name': member['name'],
+                    'email': member['email'],
+                    'points': student_points,
+                    'is_captain': member_id == team['captain_id']
+                })
+        
+        team_summary.append({
+            'id': team_id,
+            'name': team['name'],
+            'description': team.get('description', ''),
+            'modalidade': team['modalidade'],
+            'access_code': team['access_code'],
+            'members': members,
+            'member_count': len(members),
+            'total_points': total_points,
+            'average_points': total_points / len(members) if members else 0,
+            'created_at': team.get('created_at', 'N/A')
+        })
+    
+    # Sort teams by total points
+    team_summary.sort(key=lambda x: x['total_points'], reverse=True)
+    
+    return render_template('teams_admin.html', teams=team_summary, modalidades=MODALIDADES)
